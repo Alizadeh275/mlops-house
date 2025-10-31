@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  mlflow:
+    build: ./mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+
+  trainer:
+    build: ./trainer
+    depends_on:
+      - mlflow
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ./ml:/app/ml
+      - ./shared:/app/shared
+      - ./data:/app/data       # <-- mount your CSV folder
+
+
+  api:
+    build: ./api
+    depends_on:
+      - trainer
+    ports:
+      - "8000:8000"
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ./ml:/app/ml
+      - ./shared:/app/shared
+
+volumes:
+  shared:
